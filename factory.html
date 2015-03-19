@@ -52,7 +52,6 @@
 	margin: auto;
 	margin-left: 20px;
 }
-
 </style>
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
@@ -63,6 +62,10 @@
 
 <script type="text/javascript">
 	var socket = io();
+	var blue_robot = "#331CFF";
+	var green_robot = "#47FF5A";
+	var pink = "#FFE9E3";
+	var yellow = "#E6E67C";
 
 	function bayClick(id) {
 		document.getElementById(id).innerHTML = "Putting task here"
@@ -73,13 +76,64 @@
 		});
 	}
 
+	function setDefaults(tileId, robotId) {
+		
+		document.getElementById('bay4').innerHTML = "Robot 1 position"
+		document.getElementById('bay4').style.background = blue_robot;
+		document.getElementById('bay8').innerHTML = "Robot 2 position"
+		document.getElementById('bay8').style.background = green_robot;
+		
+		var colorToSet = "";
+		if(robotId == 1)
+			colorToSet = blue_robot;
+		else
+			colorToSet =  green_robot;
+		
+		if(tileId === 5)
+			document.getElementById('bay5').style.background = colorToSet;
+		else
+			document.getElementById('bay5').style.background = yellow;
+		
+		if(tileId === 6)
+			document.getElementById('bay6').style.background = colorToSet;
+		else
+			document.getElementById('bay6').style.background = yellow;
+		
+		if(tileId === 7)
+			document.getElementById('bay7').style.background = colorToSet;
+		else
+			document.getElementById('bay7').style.background = yellow;
+		
+		
+		if(tileId === 1)
+			document.getElementById('bay1').style.background = colorToSet;
+		else
+			document.getElementById('bay1').style.background = pink;
+		
+		if(tileId === 2)
+			document.getElementById('bay2').style.background = colorToSet;
+		else
+			document.getElementById('bay2').style.background = pink;
+		
+		if(tileId === 3)
+			document.getElementById('bay3').style.background = colorToSet;
+		else
+			document.getElementById('bay3').style.background = pink;
+
+	}
+
 	socket.on('connect', function(data) {
 		alert("Connected to Node .. ready to recieve message");
-		document.getElementById('bay4').innerHTML = "Robot 1 position"
-		document.getElementById('bay4').style.background = "#451111";
-		document.getElementById('bay8').innerHTML = "Robot 2 position"
-		document.getElementById('bay8').style.background = "#562222";
+		setDefaults(0,0);
 
+	});
+
+	socket.on('updateUI', function(data) {
+		
+		var tile = parseInt(data.tileId);
+		var robot = parseInt(data.robot);
+		//alert(robot+" -- "+tile);
+		setDefaults(tile,robot);
 	});
 
 	socket.on('Bag',
@@ -139,7 +193,7 @@
 
 					<div id="bay5" class="corridor">5</div>
 
-					<div id="bay6 " class="corridor">6</div>
+					<div id="bay6" class="corridor">6</div>
 
 					<div id="bay7" class="corridor">7</div>
 

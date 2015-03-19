@@ -390,6 +390,24 @@ app.post('/do_post', function(req, res) {
 
 });
 
+app.post('/updateUI', function(req, res) {
+	// get the bay id for this sensor
+	var body = req.body;
+	myLogs("Update the UI" + body.tileId + " -- " + body.robot);
+	var post_data = JSON.stringify({
+		done : true
+	});
+
+	socketobj.emit('updateUI', {
+		tileId : body.tileId,
+		robot : body.robot
+	});
+
+	res.write(post_data);
+	res.end();
+
+});
+
 app.post('/getTask', function(req, res) {
 	// get the bay id for this sensor
 	var currTask = currBag.inTask("robot");

@@ -7,7 +7,8 @@ var blessed = require('blessed');
 var bodyParser = require('body-parser');
 var app = express();
 var my_ip = "";
-var bag_ip = "192.168.0.101";
+var bag_ip = "192.168.0.106";
+var bag_port = "3000";
 var port = "4000";
 var id = 0;
 var querystring = require('querystring');
@@ -96,11 +97,29 @@ var screen = blessed.screen();
 
 var list = blessed.list({
 	parent : screen,
-	width : '100%',
+	width : '60%',
 	height : '100%',
 	top : 0,
 	left : 0,
-	align : 'center',
+	align : 'left',
+	fg : 'blue',
+	border : {
+		type : 'line'
+	},
+	// selectedBg: 'white',
+	selectedBold : true,
+	mouse : true,
+	keys : true,
+	vi : true
+});
+
+var list2 = blessed.list({
+	parent : screen,
+	width : '40%',
+	height : '100%',
+	top : 0,
+	right : 0,
+	align : 'left',
 	fg : 'blue',
 	border : {
 		type : 'line'
@@ -119,9 +138,35 @@ list.prepend(new blessed.Text({
 	content : ' This node is  ' + my_ip
 }));
 
+list2.prepend(new blessed.Text({
+	left : 2,
+	content : "Direction Updates.."
+}));
+
 screen.render();
 
 var logCount = 0;
+
+var logCount2 = 0;
+
+function direction(log, tileId) {
+
+	postWithCallBack('/updateUI', {
+		ip : my_ip,
+		tileId : tileId,
+		robot : robotId
+	}, bag_ip, bag_port, function(response) {
+
+		response = JSON.parse(response);
+		myLogs(response.done);
+
+	});
+
+	list2.add("" + log);
+	list2.focus();
+	list2.select(logCount2++);
+	screen.render();
+}
 
 function myLogs(log) {
 	list.add("" + log);
@@ -267,8 +312,7 @@ function postWithCallBack(url, data, host, port, callback) {
 
 // ping bag for task
 function getTaskFromBag() {
-	var bag_ip = "192.168.0.106";
-	var bag_port = "3000";
+
 	myLogs("worker....");
 	// logbox.setContent("Checking bag " + new Date().toString());
 	// screen.render();
@@ -329,14 +373,14 @@ function goback() {
 	myLogs("Going back --");
 	if (currentPathIndex <= currentPath.length && currentPathIndex > 0) {
 		var prev = currentPath[(currentPathIndex - 1)];
-		myLogs("Move to tile  " + prev);
+		direction("Move to tile  " + prev, prev);
 		releaseCriticalSection(prev);
 		if (currentPathIndex == currentPath.length) {
 			if (robotId === 1)
-				myLogs("Move to tile  4");			
+				direction("Move to tile  4", 4);
 			else
-				myLogs("Move to tile  8");
-			
+				direction("Move to tile  8", 8);
+
 			checkGoingBack = false;
 			return;
 		}
@@ -359,12 +403,12 @@ function reservePath() {
 	}
 	if (currentPathIndex <= currentPath.length && currentPathIndex > 0) {
 		var prev = currentPath[(currentPathIndex - 1)];
-		myLogs("Move to tile  " + prev);
+		direction("Move to tile  " + prev, prev);
 		if (currentPathIndex == currentPath.length) {
 			myLogs("Going back");
 			currentPath.reverse();
 			currentPathIndex = 1;
-			checkGoingBack =  true;
+			checkGoingBack = true;
 			goback();
 			return;
 		}
@@ -399,7 +443,7 @@ function joinNetwork() {
 }
 
 function receiveCsMessage(data) {
-	myLogs("Doing Nothing")
+	myLogs("Doing Nothing");
 }
 
 function enterCriticalSection(tile_id) {
@@ -411,10 +455,15 @@ function enterCriticalSection(tile_id) {
 	replyQueue = [];
 	currReply = 0;
 	changeColor('red');
-	if(!checkGoingBack)
-		reservePath();
-	else
-		goback();
+
+	setTimeout(function() {
+
+		if (!checkGoingBack)
+			reservePath();
+		else
+			goback();
+
+	}, 2000);
 
 }
 
