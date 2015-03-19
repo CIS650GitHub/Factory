@@ -44,7 +44,7 @@
 }
 
 .bag {
-	background: blue;
+	background: #FFE9E3;
 	width: 500px;
 	float: left;
 	height: 750px;
@@ -77,70 +77,76 @@
 	}
 
 	function setDefaults(tileId, robotId) {
-		
+
 		document.getElementById('bay4').innerHTML = "Robot 1 position"
 		document.getElementById('bay4').style.background = blue_robot;
 		document.getElementById('bay8').innerHTML = "Robot 2 position"
 		document.getElementById('bay8').style.background = green_robot;
-		
+
 		var colorToSet = "";
-		if(robotId == 1)
+		if (robotId == 1)
 			colorToSet = blue_robot;
 		else
-			colorToSet =  green_robot;
-		
-		if(tileId === 5)
+			colorToSet = green_robot;
+
+		if (tileId === 5)
 			document.getElementById('bay5').style.background = colorToSet;
 		else
 			document.getElementById('bay5').style.background = yellow;
-		
-		if(tileId === 6)
+
+		if (tileId === 6)
 			document.getElementById('bay6').style.background = colorToSet;
 		else
 			document.getElementById('bay6').style.background = yellow;
-		
-		if(tileId === 7)
+
+		if (tileId === 7)
 			document.getElementById('bay7').style.background = colorToSet;
 		else
 			document.getElementById('bay7').style.background = yellow;
-		
-		
-		if(tileId === 1)
+
+		if (tileId === 1)
 			document.getElementById('bay1').style.background = colorToSet;
 		else
+		{
 			document.getElementById('bay1').style.background = pink;
-		
-		if(tileId === 2)
+			document.getElementById('bay1').innerHTML = "1";
+		}
+		if (tileId === 2)
 			document.getElementById('bay2').style.background = colorToSet;
 		else
+		{
 			document.getElementById('bay2').style.background = pink;
-		
-		if(tileId === 3)
+			document.getElementById('bay2').innerHTML = "2";
+		}
+
+		if (tileId === 3)
 			document.getElementById('bay3').style.background = colorToSet;
 		else
+		{
 			document.getElementById('bay3').style.background = pink;
+			document.getElementById('bay3').innerHTML = "3";
+		}
 
 	}
 
 	socket.on('connect', function(data) {
 		alert("Connected to Node .. ready to recieve message");
-		setDefaults(0,0);
+		setDefaults(0, 0);
 
 	});
 
 	socket.on('updateUI', function(data) {
-		
+
 		var tile = parseInt(data.tileId);
 		var robot = parseInt(data.robot);
 		//alert(robot+" -- "+tile);
-		setDefaults(tile,robot);
+		setDefaults(tile, robot);
 	});
 
-	socket.on('Bag',
-			function(data) {
-				document.getElementById('theList').innerHTML += ('<li>'
-						+ data.msg + '</li>');
-			});
+	socket.on('Bag', function(data) {
+		document.getElementById('theList').innerHTML += ('<li> <FONT SIZE = 5>'
+				+ data.msg + '</FONT> </li>');
+	});
 
 	function bagClick(id) {
 

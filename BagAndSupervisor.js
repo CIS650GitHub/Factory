@@ -408,32 +408,38 @@ app.post('/updateUI', function(req, res) {
 
 });
 
+app.post('/outResultRobot', function(req, res) {
+	var body = req.body;
+	myLogs("Got Outresult");
+	var post_data = JSON.stringify({
+		done : false
+	});
+	var des = "bay"+body.bay;
+	currBag.outResult("robot", 0, body.taskId, des);	
+	updateBag("Result body.taskId :" + des);
+	
+	res.write(post_data);
+	res.end();
+
+});
+
+
 app.post('/getTask', function(req, res) {
-	// get the bay id for this sensor
 	var currTask = currBag.inTask("robot");
-	myLogs("Got the post");
 	var post_data = JSON.stringify({
 		gotTask : false
 	});
 
 	if (currTask != null) {
-		// send message back with task information
-		myLogs("crr task not null");
+		myLogs("curr task not null");
 		post_data = JSON.stringify({
 			gotTask : true,
 			taskId : currTask.idT,
 			taskDes : currTask.desTask,
 		});
-
-		// send the task with it's id and description back to the
-		// requester
-
 	}
-
 	res.write(post_data);
-	// s1_queue=[];
 	res.end();
-
 });
 
 // Quit on Escape, q, or Control-C.

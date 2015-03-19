@@ -48,7 +48,7 @@ robot2Map[2] = [ 7, 6, 2 ];
 robot2Map[3] = [ 7, 3 ];
 
 // set this to 1 or 2;
-var robotId = 1;
+var robotId = 2;
 var checkGoingBack = false;
 
 var my_time = 0;
