@@ -1,4 +1,3 @@
-var Discover = require('node-discover');
 var os = require('os');
 var http = require('http');
 var express = require('express');
@@ -10,13 +9,17 @@ var app = express();
 var my_ip = "";
 var port = "4000";
 var my_bay = 1;
-var bag_ip = "192.168.0.101";
+var bag_ip = "192.168.0.102";
+var bag_port = "3000";
 
 var currReply = 0;
 var currRequest = 0;
 var numNodes = 0;
 var sensorValue = 0;
 
+var workingOnTask = false;
+var currDesc = "";
+var currTaskID = "";
 
 var ifaces = os.networkInterfaces();
 Object.keys(ifaces).forEach(function(ifname) {
@@ -40,133 +43,133 @@ app.use(bodyParser.urlencoded());
 // Create a screen object.
 var screen = blessed.screen();
 
-var  = blessed.list({
-	parent: screen,
-	width: '50%',
-	height: '100%',
-	top: 0,
-	left: 0,
-	align: 'center',
-	fg: 'blue',
-	border: {
-		type: 'line'
+var list = blessed.list({
+	parent : screen,
+	width : '50%',
+	height : '100%',
+	top : 0,
+	left : 0,
+	align : 'center',
+	fg : 'blue',
+	border : {
+		type : 'line'
 	},
-	//selectedBg: 'white',
-	selectedBold: true,
-	mouse: true,
-	keys: true,
-	vi: true
+	// selectedBg: 'white',
+	selectedBold : true,
+	mouse : true,
+	keys : true,
+	vi : true
 });
 
 var buttonSensor1 = blessed.button({
-	parent: screen,
-	mouse: true,
-	keys: true,
-	shrink: true,
-	top: 0,
-	right: 0,
-	width: '25%',
-	height: '25%',
-	name: 'Sensor1',
-	content: 'Sensor1',
-	style: {
-		fg: 'black',
-		bg: 'blue',
-		focus: {
-			bg: 'blue',
-			fg: 'white'
+	parent : screen,
+	mouse : true,
+	keys : true,
+	shrink : true,
+	top : 0,
+	left : '50%',
+	width : '25%',
+	height : '50%',
+	name : 'Value10',
+	content : 'Value10',
+	style : {
+		fg : 'black',
+		bg : 'blue',
+		focus : {
+			bg : 'blue',
+			fg : 'white'
 		},
-		hover: {
-			bg: 'blue',
-			fg: 'white'
+		hover : {
+			bg : 'black',
+			fg : 'white'
 		}
 	},
-	border: {
-		type: 'line'
+	border : {
+		type : 'line'
 	}
 });
 
 var buttonSensor2 = blessed.button({
-	parent: screen,
-	mouse: true,
-	keys: true,
-	shrink: true,
-	bottom: 0,
-	right: 0,
-	width: '25%',
-	height: '25%',
-	name: 'Sensor2',
-	content: 'Sensor2',
-	style: {
-		fg: 'black',
-		bg: 'red',
-		focus: {
-			bg: 'red',
-			fg: 'white'
+	parent : screen,
+	mouse : true,
+	keys : true,
+	shrink : true,
+	top : 0,
+	right : 0,
+	width : '25%',
+	height : '50%',
+	name : 'Value20',
+	content : 'Value20',
+	style : {
+		fg : 'black',
+		bg : 'red',
+		focus : {
+			bg : 'red',
+			fg : 'white'
 		},
-		hover: {
-			bg: 'red',
-			fg: 'white'
+		hover : {
+			bg : 'black',
+			fg : 'white'
 		}
 	},
-	border: {
-		type: 'line'
+	border : {
+		type : 'line'
 	}
 });
 
 var buttonSensor3 = blessed.button({
-	parent: screen,
-	mouse: true,
-	keys: true,
-	shrink: true,
-	bottom: 0,
-	right: 0,
-	width: '25%',
-	height: '25%',
-	name: 'Sensor3',
-	content: 'Sensor3',
-	style: {
-		fg: 'black',
-		bg: 'yellow',
-		focus: {
-			bg: 'yellow',
-			fg: 'white'
+	parent : screen,
+	mouse : true,
+	keys : true,
+	shrink : true,
+	bottom : 0,
+	right : 0,
+	width : '25%',
+	height : '50%',
+	name : 'Value30',
+	content : 'Value30',
+	style : {
+		fg : 'black',
+		bg : 'yellow',
+		focus : {
+			bg : 'orange',
+			fg : 'white'
 		},
-		hover: {
-			bg: 'yellow',
-			fg: 'white'
+		hover : {
+			bg : 'black',
+			fg : 'white'
 		}
 	},
-	border: {
-		type: 'line'
+	border : {
+		type : 'line'
 	}
 });
 
 var buttonSensor4 = blessed.button({
-	parent: screen,
-	mouse: true,
-	keys: true,
-	shrink: true,
-	bottom: 0,
-	right: 0,
-	width: '25%',
-	height: '25%',
-	name: 'Sensor4',
-	content: 'Sensor4',
-	style: {
-		fg: 'black',
-		bg: 'green',
-		focus: {
-			bg: 'green',
-			fg: 'white'
+	parent : screen,
+	mouse : true,
+	keys : true,
+	shrink : true,
+	bottom : 0,
+	left : '50%',
+	width : '25%',
+	height : '50%',
+	name : 'Value40',
+	content : 'Value40',
+	style : {
+		fg : 'black',
+		bg : 'green',
+		focus : {
+			bg : 'green',
+			fg : 'white'
 		},
-		hover: {
-			bg: 'green',
-			fg: 'white'
+		hover : {
+			bg : 'black',
+			fg : 'white'
 		}
 	},
-	border: {
-		type: 'line'
+	border : {
+		type : 'line'
 	}
 });
 
@@ -175,8 +178,8 @@ var http = require('http');
 var fs = require('fs');
 var querystring = require('querystring');
 list.prepend(new blessed.Text({
-	left: 2,
-	content: ' This node is  ' + my_ip
+	left : 2,
+	content : ' This node is  ' + my_ip
 }));
 screen.render();
 
@@ -191,253 +194,140 @@ function myLogs(log) {
 
 function changeColor(color) {
 	list.style.bg = color;
-	list.style.item.bg = color; //green for get
+	list.style.item.bg = color;
 	screen.render();
 }
 
 buttonSensor1.on('press', function() {
-
-	myLogs("Sensor Value: 10");
-
-	//increment our time stamp
-	my_time = highest_time + 1;
-	changeColor('yellow');
-	var success1 = d.send(master_ip, {
-		Value: 10,
-		TaskID: id,
-		Description: ,
-		Port: port,
-		MessageType: messageType.request,
-		TimeStamp: my_time,
-		ipAddress: my_ip
-	});
-
-	if (!success1) {
-		myLogs("sending message failed");
+	if (workingOnTask) {
+		myLogs("Sensor Value: 10");
+		changeColor('yellow');
+		var response = {
+			sensorReading : 10,
+			id : currTaskID,
+			description : currDesc,
+			idSender : "sensor",
+			ip : my_ip
+		}
+		myLogs("Adding result to bag")
+		postWithCallBack('/addSensorResult', response, bag_ip, bag_port, null);
+		workingOnTask = false;
+		changeColor('blue');
+		getTaskFromBag();
 	}
-
 });
 
 buttonSensor2.on('press', function() {
-
-	myLogs("Sensor Value: 15");
-
-	//increment our time stamp
-	my_time = highest_time + 1;
-	changeColor('yellow');
-	var success1 = d.send(master_ip, {
-		Value: 15,
-		TaskID: id,
-		Description: ,
-		Port: port,
-		MessageType: messageType.request,
-		TimeStamp: my_time,
-		ipAddress: my_ip
-	});
-
-	if (!success1) {
-		myLogs("sending message failed");
+	if (workingOnTask) {
+		myLogs("Sensor Value: 20");
+		changeColor('yellow');
+		var response = {
+			sensorReading : 20,
+			id : currTaskID,
+			description : currDesc,
+			idSender : "sensor",
+			ip : my_ip
+		}
+		myLogs("Adding result to bag")
+		postWithCallBack('/addSensorResult', response, bag_ip, bag_port, null);
+		workingOnTask = false;
+		changeColor('red');
+		getTaskFromBag();
 	}
-
 });
 
 buttonSensor3.on('press', function() {
-
-	myLogs("Sensor Value: 20");
-
-	//increment our time stamp
-	my_time = highest_time + 1;
-	changeColor('yellow');
-	var success1 = d.send(master_ip, {
-		Value: 20,
-		TaskID: id,
-		Description: ,
-		Port: port,
-		MessageType: messageType.request,
-		TimeStamp: my_time,
-		ipAddress: my_ip
-	});
-
-	if (!success1) {
-		myLogs("sending message failed");
+	if (workingOnTask) {
+		myLogs("Sensor Value: 30");
+		changeColor('yellow');
+		var response = {
+			sensorReading : 30,
+			id : currTaskID,
+			description : currDesc,
+			idSender : "sensor",
+			ip : my_ip
+		}
+		myLogs("Adding result to bag")
+		postWithCallBack('/addSensorResult', response, bag_ip, bag_port, null);
+		workingOnTask = false;
+		changeColor('orange');
+		getTaskFromBag();
 	}
-
 });
 
 buttonSensor4.on('press', function() {
+	if (workingOnTask) {
+		myLogs("Sensor Value: 40");
+		changeColor('yellow');
+		var response = {
+			sensorReading : 40,
+			id : currTaskID,
+			description : currDesc,
+			idSender : "sensor",
+			ip : my_ip
+		}
+		myLogs("Adding result to bag");
+		postWithCallBack('/addSensorResult', response, bag_ip, bag_port, null);
+		workingOnTask = false;
+		changeColor('green');
+		getTaskFromBag();
 
-	myLogs("Sensor Value: 25");
-
-	//increment our time stamp
-	my_time = highest_time + 1;
-	changeColor('yellow');
-	var success1 = d.send(master_ip, {
-		Value: 25,
-		TaskID: id,
-		Description: ,
-		Port: port,
-		MessageType: messageType.request,
-		TimeStamp: my_time,
-		ipAddress: my_ip
-	});
-
-	if (!success1) {
-		myLogs("sending message failed");
 	}
-
 });
 
+getTaskFromBag();
 
-var d = new Discover({
-	helloInterval: 1000,
-	checkInterval: 2000,
-	nodeTimeout: 2000,
-	masterTimeout: 2000
-});
+// ping bag for task
+function getTaskFromBag() {
+	if (workingOnTask)
+		return;
 
-registerCallbacks();
+	myLogs("Get Sensor Task....");
+	// logbox.setContent("Checking bag " + new Date().toString());
+	// screen.render();
+	postWithCallBack('/getSensorTask', {
+		bayId : my_bay
+	}, bag_ip, bag_port, function(response) {
 
-
-function doSensorTask() {
-		/*
-    setTimeout(sendPrimeWork, k_milli);
-    workNum = n;
-    workPrimeCount = c;
-    box.setContent("Counting from!!!!!" + workPrimeCount);
-    box.style.bg = 'yellow'; //green for get
-    screen.render();
-    workPrimeCounter(workNum, workPrimeCount, k_milli);
-		*/
-}
-
-
-/*
-First, the sensor receives a broadcasted task (request) message
-from the bag.  The sensor then submits a request message
-to the bag for this particular task.  If this sensor is
-chosen to complete the task, then the sensor will receive a
-response message from the bag.  Finally, the sensor will
-submit a response message to the bag, with the result of the
-sensor-reading task.
-Sensor: 1 request, 1 response (send);
-Bag: 1 request, 1 response (send);
-
-Receive a broadcasted task message with a task ID,
-description, sender IP address, and timestamp.
-
-*/
-function receiveMessage(data) {
-	//myLogs("Received ");
-	var taskID = data.taskID;
-	var taskDes = data.taskDes;
-
-	/*
-	//A new sensor task was added to the Bag.
-	//Let's get the task and start working!
-	myLogs("Sent Task Request");
-	var post_data = querystring.stringify({
-				ipAddress: my_ip,
-				message: "getTask",
-				idSender: "sensor",
-				bayID: my_bay
+		response = JSON.parse(response);
+		myLogs(response.gotTask);
+		if (response.gotTask === true) {
+			myLogs("Got message from bag!");
+			myLogs("Get a sensor reading...");
+			currDesc = response.taskDes;
+			currTaskID = response.taskId;
+			workingOnTask = true;
+			// moveToTarget(response);
+		}
 	});
-	PostObject(post_data, bag_ip);
-	*/
-
-	//Response from the bag, indicating that the
-	//sensor has been given the task that was requested.
-		myLogs("Task Request Granted");
-		myLogs("Waiting for a sensor reading...");
-    //Once a human presses a sensor-value button,
-		//grab the selected value and package it in the taskDescr
-		var post_data = querystring.stringify({
-				ipAddress: my_ip,
-				message: "addResult",
-				idSender: "sensor",
-				sensorReading: , //place value here...
-				id: taskID,
-				description: taskDes
-			});
-		PostObject(post_data, bag_ip);
+	// Ping the bag every 5 seconds
+	setTimeout(getTaskFromBag, 5000);
 
 }
 
-function registerCallbacks() {
-
-	d.on("promotion", function() {
-		master_ip = my_ip;
-		var success = d.join(my_ip, receiveMessage);
-		if (!success) {
-			//myLogs("could not join that channel; probably because it is reserved");
-		}
-	});
-
-	d.on("demotion", function() {
-
-	});
-
-	d.on("added", function(obj) {
-
-		numNodes++;
-		myLogs("Other nodes " + numNodes);
-	});
-
-	d.on("removed", function(obj) {
-
-		numNodes--;
-		myLogs("Other nodes " + numNodes);
-		if (currentState == states.WAIT && replyQueue.length == (numNodes)) {
-
-			changeColor('red');
-			currentState = states.CRITICAL;
-			myLogs("Critical section");
-		}
-
-	});
-
-	d.on("master", function(obj) {
-
-		master_ip = obj.address;
-		var success = d.join(master_ip, receiveMessage);
-		if (!success) {
-			//myLogs("slave could not join that channel; probably because it is reserved");
-		}
-
-	});
-
-	d.eachNode(function(node) {});
-}
-
-
-function PostObject(post_data, address) {
-	// An object of options to indicate where to post to
-
-	//myLogs('Sending PostObject');
+function postWithCallBack(url, data, host, port, callback) {
+	var post_data = querystring.stringify(data);
 	var post_options = {
-		host: address,
-		port: port,
-		path: '/do_post',
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Content-Length': Buffer.byteLength(post_data)
+		host : host,
+		port : port,
+		path : url,
+		method : 'POST',
+		headers : {
+			'Content-Type' : 'application/x-www-form-urlencoded',
+			'Content-Length' : post_data.length
 		}
 	};
-
-	// Set up the request
 	var post_req = http.request(post_options, function(res) {
 		res.setEncoding('utf8');
 		res.on('data', function(chunk) {
-
+			if (typeof callback == 'function')
+				callback(chunk);
 		});
 	});
 
-	post_req.on('error', function(e, post_data) {
-		myLogs('problem with sending request: ');
-
-	});
-
+	// post the data
 	post_req.write(post_data);
+
 	post_req.end();
 }
 
@@ -447,17 +337,16 @@ app.get('/', function(request, response) {
 
 // handle POST requests
 app.post('/do_post', function(req, res) {
-	//myLogs("app.post received" );
+	// myLogs("app.post received" );
 
-	receiveMessage(req.body);
 	res.json({
-		"query": req.body,
-		"id": JSON.stringify(my_ip)
+		"query" : req.body,
+		"id" : JSON.stringify(my_ip)
 	});
 });
 
 // Quit on Escape, q, or Control-C.
-screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+screen.key([ 'escape', 'q', 'C-c' ], function(ch, key) {
 	return process.exit(0);
 });
 

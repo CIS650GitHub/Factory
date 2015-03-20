@@ -7,7 +7,7 @@ var blessed = require('blessed');
 var bodyParser = require('body-parser');
 var app = express();
 var my_ip = "";
-var bag_ip = "192.168.0.106";
+var bag_ip = "192.168.0.103";
 var bag_port = "3000";
 var port = "4000";
 var id = 0;
@@ -49,7 +49,6 @@ robot2Map[3] = [ 7, 3 ];
 
 // set this to 1 or 2;
 var robotId = 1;
-var checkGoingBack = false;
 
 var my_time = 0;
 var highest_time = 0;
@@ -98,7 +97,7 @@ var screen = blessed.screen();
 var list = blessed.list({
 	parent : screen,
 	width : '60%',
-	height : '100%',
+	height : '60%',
 	top : 0,
 	left : 0,
 	align : 'left',
@@ -129,6 +128,34 @@ var list2 = blessed.list({
 	mouse : true,
 	keys : true,
 	vi : true
+});
+
+var moveButton = blessed.button({
+	parent : screen,
+	mouse : true,
+	keys : true,
+	shrink : true,
+	bottom : 0,
+	left : 0,
+	width : '60%',
+	height : '40%',
+	name : 'Move',
+	content : 'Move',
+	style : {
+		fg : 'black',
+		bg : 'blue',
+		focus : {
+			bg : 'blue',
+			fg : 'white'
+		},
+		hover : {
+			bg : 'black',
+			fg : 'white'
+		}
+	},
+	border : {
+		type : 'line'
+	}
 });
 
 app.set('port', process.env.PORT || port);
@@ -270,11 +297,15 @@ function postWithCallBack(url, data, host, port, callback) {
 }
 
 var currentlyWorking = false;
+var currentPath = null;
+var countCurrentPath = 0;
+var currentTaskId = "";
+
 // ping bag for task
 function getTaskFromBag() {
 	if (currentlyWorking)
 		return;
-
+	countCurrentPath = 0;
 	currentPathIndex = 0;
 	currentPath = new Array();
 	currentTaskId = "";
@@ -296,8 +327,6 @@ function getTaskFromBag() {
 
 }
 
-var currentPath = null;
-var currentTaskId = "";
 function moveToTarget(response) {
 
 	var bayId = response.taskDes;
@@ -329,42 +358,12 @@ function moveToTarget(response) {
 		myLogs("Path not found");
 		return;
 	}
-	myLogs(currentPath.toString());
+	directionLog("Path:"+currentPath.toString());
 
-	reservePath();
+	reserveTotalPath();
 }
 
 var currentPathIndex = 0;
-
-function goback() {
-
-	myLogs("Going back --");
-	if (currentPathIndex <= currentPath.length && currentPathIndex > 0) {
-		var prev = currentPath[(currentPathIndex - 1)];
-		direction("Move to tile  " + prev, prev);
-		releaseCriticalSection(prev);
-		if (currentPathIndex == currentPath.length) {
-			if (robotId === 1)
-				direction("Move to tile  4", 4);
-			else
-				direction("Move to tile  8", 8);
-			currentlyWorking = false;
-			checkGoingBack = false;
-			currentPath.reverse();
-			directionLog("---------------------------------");
-			getTaskFromBag();
-			return;
-		}
-	}
-
-	if (currentPathIndex < currentPath.length) {
-
-		myLogs("get cs for tile " + currentPath[currentPathIndex]);
-		getCriticalSection(currentPath[currentPathIndex]);
-
-	}
-
-}
 
 function putResultInBag(tileId) {
 
@@ -381,35 +380,81 @@ function putResultInBag(tileId) {
 	});
 }
 
-function reservePath() {
+function reserveTotalPath() {
+
+	myLogs("Get Total Path");
+	countCurrentPath = currentPath.length - 1;
+	for (var i = 0; i < currentPath.length; i++) {
+		getCriticalSection(currentPath[i]);
+	}
+
+}
+var moveDirection = false;
+moveButton.on('press', function() {
+	myLogs(" Count:" + countCurrentPath );
+	if (!currentlyWorking || countCurrentPath != -1)
+	{	
+		myLogs("Not your turn.");
+		return;
+	}
+	if (moveDirection) {
+		if (currentMoveIndex == currentPath.length) {
+			currentMoveIndex = currentMoveIndex - 1;
+			var prev = currentPath[currentMoveIndex];
+			putResultInBag(currentPath[currentMoveIndex]);
+			myLogs("Going back");
+			direction("Turn from tile " + prev, prev);
+			releaseCriticalSection(prev);
+			currentMoveIndex--;
+			moveDirection = false;
+			return;
+		}
+		var prev = currentPath[currentMoveIndex];
+		direction("Move to tile  " + prev, prev);
+		currentMoveIndex++;
+
+	} else {
+
+		myLogs("Going Back  i: " + i);
+		if (currentMoveIndex < 0) {
+			if (robotId === 1)
+				direction("Move to tile  4", 4);
+			else
+				direction("Move to tile  8", 8);
+
+			currentlyWorking = false;
+			directionLog("---------------------------------");
+
+			getTaskFromBag();
+			return;
+		}
+
+		var prev = currentPath[currentMoveIndex];
+		direction("Move to tile  " + prev, prev);
+		releaseCriticalSection(prev);
+		currentMoveIndex--;
+
+	}
+
+});
+
+function moveBackWard(i) {
+
+}
+var currentMoveIndex = 0;
+
+function traversePath() {
 
 	if (currentPath == null) {
 		myLogs("Path not found");
 		return;
 	}
-
-	if (currentPathIndex <= currentPath.length && currentPathIndex > 0) {
-		var prev = currentPath[(currentPathIndex - 1)];
-		direction("Move to tile  " + prev, prev);
-		if (currentPathIndex == currentPath.length) {
-			putResultInBag(prev);
-			myLogs("Going back");
-			currentPath.reverse();
-			currentPathIndex = 1;
-			myLogs("reverse -- cuurPathIndex -- " + currentPathIndex);
-			checkGoingBack = true;
-			goback();
-			return;
-		}
-		releaseCriticalSection(prev);
-	}
-
-	if (currentPathIndex < currentPath.length) {
-
-		myLogs("get critical");
-		getCriticalSection(currentPath[currentPathIndex]);
-
-	}
+	var prev = currentPath[0];
+	myLogs("Worker 1 start moving..." );
+	direction("Click Button to move to" + prev);
+	currentMoveIndex = 0;
+	moveDirection = true;
+	return;
 
 }
 
@@ -418,10 +463,10 @@ joinNetwork();
 function joinNetwork() {
 
 	d = new Discover({
-		helloInterval : 1000,
-		checkInterval : 2000,
-		nodeTimeout : 2000,
-		masterTimeout : 2000,
+		helloInterval : 4000,
+		checkInterval : 5000,
+		nodeTimeout : 5000,
+		masterTimeout : 5000,
 
 	});
 
@@ -441,15 +486,12 @@ function enterCriticalSection(tile_id) {
 	currReply[tile_id] = 0;
 	changeColor('red');
 
-	setTimeout(function() {
+	countCurrentPath--;
 
-		if (!checkGoingBack)
-			reservePath();
-		else
-			goback();
-
-	}, 1000);
-
+	if (countCurrentPath == -1) {
+		myLogs("Got the Path...");
+		traversePath();
+	}
 }
 
 function receiveResponseData(data) {

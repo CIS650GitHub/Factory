@@ -156,12 +156,11 @@ function Bag() {
 			for (var i = 0; i < this.tasks.length; i++) {
 				var idBay = parseInt(this.tasks[i].desTask[3]);
 				if ((this.tasks[i].typeTask == tTask)
-						&& (this.tasks[i].available == true)
-						&& (bayId == idBay)) {
+						&& (this.tasks[i].available == true)) {
 
 					var taskToReturn = this.tasks[i];
 					this.tasks[i].available = false;
-
+					myLogs("sensor Task" + taskToReturn.desTask);
 					return taskToReturn;
 				}
 			}
@@ -291,10 +290,12 @@ function Bag() {
 			return t.idT;
 		} else if (tTask == "robot") {
 			var t = new Task(this.numTasks, true, "sensor", des);
-
 			this.tasks.push(t);
 			this.numTasks++;
+			msg = "Need Sensor Value for " + des;
+			updateBag(msg);
 			return t.idT;
+
 		} else {
 			myLogs("Error: sensor cannot add tasks to bag");
 			return -1;
@@ -318,6 +319,10 @@ function Bag() {
 			var r = new Result(idResult, sensor, typeResult, true, des);
 			this.results.push(r);
 			this.numResults++;
+			var msg = "Sensor Result " + sensor + "-" + des;
+			updateBag(msg);
+			sensorResult(sensor, des);
+
 			return true;
 
 		} else {
@@ -364,6 +369,11 @@ io.on('connection', function(socket) {
 		currBag.outTask("supervisor", data.msg);
 	});
 
+	socket.on('AddSensorTask', function(data) {
+		myLogs("Added Sensor the task" + JSON.stringify(data));
+		currBag.outTask("robot", data.msg);
+	});
+
 });
 
 function updateBag(msg) {
@@ -372,6 +382,17 @@ function updateBag(msg) {
 
 	socketobj.emit('Bag', {
 		msg : msg
+	});
+
+}
+
+function sensorResult(value, id) {
+	if (socketobj == undefined)
+		return;
+
+	socketobj.emit('sensorResult', {
+		value : value,
+		id : id
 	});
 
 }
@@ -390,10 +411,45 @@ app.post('/do_post', function(req, res) {
 
 });
 
+app.post('/addSensorResult', function(req, res) {
+	// get the bay id for this sensor
+
+	var the_body = req.body;
+	var tDes = the_body.description;
+	var idResult = parseInt(the_body.id);
+	var sRead = parseInt(the_body.sensorReading);
+	currBag.outResult("sensor", sRead, idResult, tDes)
+	myLogs("Added sensor result to bag!");
+
+});
+
+app.post('/getSensorTask', function(req, res) {
+	// get the bay id for this sensor
+	var body = req.body;
+	var bayId = parseInt(body.bayId);
+	var currTask = currBag.inTaskSensor("sensor", bayId);
+	var post_data = JSON.stringify({
+		gotTask : false
+	});
+
+	if (currTask != null) {
+		// send message back with task information
+		myLogs("Sending task to Sensor -");
+		post_data = JSON.stringify({
+			gotTask : true,
+			taskId : currTask.idT,
+			taskDes : currTask.desTask,
+		});
+	}
+
+	res.write(post_data);
+	res.end();
+
+});
+
 app.post('/updateUI', function(req, res) {
 	// get the bay id for this sensor
 	var body = req.body;
-	myLogs("Update the UI" + body.tileId + " -- " + body.robot);
 	var post_data = JSON.stringify({
 		done : true
 	});
@@ -410,19 +466,17 @@ app.post('/updateUI', function(req, res) {
 
 app.post('/outResultRobot', function(req, res) {
 	var body = req.body;
-	myLogs("Got Outresult");
 	var post_data = JSON.stringify({
 		done : false
 	});
-	var des = "bay"+body.bay;
-	currBag.outResult("robot", 0, body.taskId, des);	
+	var des = "bay" + body.bay;
+	currBag.outResult("robot", 0, body.taskId, des);
 	updateBag("Result body.taskId :" + des);
-	
+
 	res.write(post_data);
 	res.end();
 
 });
-
 
 app.post('/getTask', function(req, res) {
 	var currTask = currBag.inTask("robot");
@@ -431,7 +485,7 @@ app.post('/getTask', function(req, res) {
 	});
 
 	if (currTask != null) {
-		myLogs("curr task not null");
+		myLogs("Sending task to Robot");
 		post_data = JSON.stringify({
 			gotTask : true,
 			taskId : currTask.idT,
