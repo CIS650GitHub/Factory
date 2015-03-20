@@ -1,8 +1,5 @@
-
 <html>
-
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Factory Floor</title>
@@ -13,7 +10,7 @@
 <style type="text/css">
 .sensor {
 	background: #aaa;
-	width: 150px;
+	width: 300px;
 	height: 150px;
 	float: left;
 	border: 1px solid black;
@@ -57,7 +54,6 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <script
 	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
-<script src="javascripts/jquery.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 
 <script type="text/javascript">
@@ -68,7 +64,7 @@
 	var yellow = "#E6E67C";
 
 	function bayClick(id) {
-		document.getElementById(id).innerHTML = "Putting task here"
+		document.getElementById(id).innerHTML = "Task here"
 		document.getElementById(id).style.background = "#FF0000";
 
 		socket.emit('AddTask', {
@@ -76,53 +72,32 @@
 		});
 	}
 
+	var r1pos = "bay4";
+	var r2pos = "bay8";
+
 	function setDefaults(tileId, robotId) {
 
-		document.getElementById('bay4').innerHTML = "Robot 1 position"
-		document.getElementById('bay4').style.background = blue_robot;
-		document.getElementById('bay8').innerHTML = "Robot 2 position"
-		document.getElementById('bay8').style.background = green_robot;
-
 		var colorToSet = "";
-		if (robotId == 1)
-			colorToSet = blue_robot;
-		else
-			colorToSet = green_robot;
 
-		if (tileId === 5)
-			document.getElementById('bay5').style.background = colorToSet;
-		else
-			document.getElementById('bay5').style.background = yellow;
+		if (tileId === "bay4")
+			document.getElementById(tileId).style.background = blue_robot;
 
-		if (tileId === 6)
-			document.getElementById('bay6').style.background = colorToSet;
-		else
-			document.getElementById('bay6').style.background = yellow;
+		if (tileId === "bay8")
+			document.getElementById(tileId).style.background = green_robot;
 
-		if (tileId === 7)
-			document.getElementById('bay7').style.background = colorToSet;
-		else
-			document.getElementById('bay7').style.background = yellow;
+		if (tileId === "bay5" || tileId === "bay6" || tileId === "bay7")
+			document.getElementById(tileId).style.background = yellow;
 
-		if (tileId === 1)
-			document.getElementById('bay1').style.background = colorToSet;
-		else
-		{
+		if (tileId === "bay1") {
 			document.getElementById('bay1').style.background = pink;
 			document.getElementById('bay1').innerHTML = "1";
 		}
-		if (tileId === 2)
-			document.getElementById('bay2').style.background = colorToSet;
-		else
-		{
+		if (tileId === "bay2") {
 			document.getElementById('bay2').style.background = pink;
 			document.getElementById('bay2').innerHTML = "2";
-		}
 
-		if (tileId === 3)
-			document.getElementById('bay3').style.background = colorToSet;
-		else
-		{
+		}
+		if (tileId === "bay3") {
 			document.getElementById('bay3').style.background = pink;
 			document.getElementById('bay3').innerHTML = "3";
 		}
@@ -131,16 +106,43 @@
 
 	socket.on('connect', function(data) {
 		alert("Connected to Node .. ready to recieve message");
-		setDefaults(0, 0);
+		document.getElementById('bay4').innerHTML = "Robot 1 position"
+		document.getElementById('bay4').style.background = blue_robot;
+		document.getElementById('bay8').innerHTML = "Robot 2 position"
+		document.getElementById('bay8').style.background = green_robot;
+		document.getElementById('bay5').style.background = yellow;
+		document.getElementById('bay6').style.background = yellow;
+		document.getElementById('bay7').style.background = yellow;
+		document.getElementById('bay1').style.background = pink;
+		document.getElementById('bay1').innerHTML = "1";
+		document.getElementById('bay2').style.background = pink;
+		document.getElementById('bay2').innerHTML = "2";
+		document.getElementById('bay3').style.background = pink;
+		document.getElementById('bay3').innerHTML = "3";
+
+		document.getElementById('theList').innerHTML += ('<li> <FONT SIZE = 5>'
+				+ "This is BAG " + '</FONT> </li>');
 
 	});
 
 	socket.on('updateUI', function(data) {
 
-		var tile = parseInt(data.tileId);
+		var tile = "bay" + parseInt(data.tileId);
 		var robot = parseInt(data.robot);
-		//alert(robot+" -- "+tile);
-		setDefaults(tile, robot);
+		var colorToSet = "";
+		var text = "";
+		if (robot == 1) {
+			colorToSet = blue_robot;
+			setDefaults(r1pos, robot);
+			r1pos = tile;
+		} else {
+			colorToSet = green_robot;
+			setDefaults(r2pos, robot);
+			r2pos = tile;
+		}
+
+		document.getElementById(tile).style.background = colorToSet;
+
 	});
 
 	socket.on('Bag', function(data) {
@@ -148,9 +150,43 @@
 				+ data.msg + '</FONT> </li>');
 	});
 
-	function bagClick(id) {
+	function closeBay1() {
+		document.getElementById('bay1').innerHTML = "Bay Closed";
+		document.getElementById('bay1').style.background = "#FF0000";
+		document.getElementById('bay1').onclick = "return false";
+	}
+	function closeBay2() {
+		document.getElementById('bay2').innerHTML = "Bay Closed";
+		document.getElementById('bay2').style.background = "#FF0000";
+		document.getElementById('bay2').onclick = "return false";
+	}
+	function closeBay3() {
+		document.getElementById('bay3').innerHTML = "Bay Closed";
+		document.getElementById('bay3').style.background = "#FF0000";
+		document.getElementById('bay3').onclick = "return false";
+	}
+	function sensorValue(id) {
+		alert("id - " + id);
+		socket.emit('AddSensorTask', {
+			msg : "bay" + id
+		});
 
 	}
+
+	socket.on('sensorResult', function(data) {
+
+		var value = parseInt(data.value);
+		var id = data.id;
+		if (value > 30) {
+			if (id == "bay1")
+				document.getElementById("close1").style.visibility = "visible";
+			else if (id == "bay2")
+				document.getElementById("close2").style.visibility = "visible";
+			else if (id == "bay3")
+				document.getElementById("close3").style.visibility = "visible";
+
+		}
+	});
 </script>
 
 </head>
@@ -168,24 +204,46 @@
 
 		<center>
 
-			<div style="width: 600px; text-align: center; font-size: 20pt;">
+			<div style="width: 900px; text-align: center; font-size: 20pt;">
 
 				<div style="width: 450px; float: left;">
 
 					<div style="width: 450px; height: 150px;"></div>
 
-					<div style="width: 450px; height: 150px;">
-						<div class="sensor">S</div>
+					<div style="width: 600px; height: 150px;">
+						<div class="sensor">
+							Sensor
+							<p></p>
+							<button id="1" onclick="sensorValue(this.id)">SensorValue</button>
+							<p></p>
+							<button id="close1" style="visibility: hidden;"
+								onclick="closeBay1()">CloseBay</button>
+
+						</div>
 						<div id="bay1" onclick="bayClick(this.id)" class="bay">1</div>
 					</div>
 
-					<div style="width: 450px; height: 150px;">
-						<div class="sensor">S</div>
+					<div style="width: 600px; height: 150px;">
+						<div class="sensor">
+							Sensor
+							<p></p>
+							<button id="2" onclick="sensorValue(this.id)">SensorValue</button>
+							<p></p>
+							<button id="close2" style="visibility: hidden;"
+								onclick="closeBay2()">CloseBay</button>
+						</div>
 						<div id="bay2" onclick="bayClick(this.id)" class="bay">2</div>
 					</div>
 
-					<div style="width: 450px; height: 150px;">
-						<div class="sensor">S</div>
+					<div style="width: 600px; height: 150px;">
+						<div class="sensor">
+							Sensor
+							<p></p>
+							<button id="3" onclick="sensorValue(this.id)">SensorValue</button>
+							<p></p>
+							<button id="close3" style="visibility: hidden;"
+								onclick="closeBay3()">CloseBay</button>
+						</div>
 						<div id="bay3" onclick="bayClick(this.id)" class="bay">3</div>
 					</div>
 
@@ -193,7 +251,7 @@
 
 				</div>
 
-				<div style="width: 150px; float: right">
+				<div style="width: 300px; float: right">
 
 					<div id="bay4" class="stall">4</div>
 
